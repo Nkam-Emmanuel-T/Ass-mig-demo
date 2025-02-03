@@ -1,0 +1,34 @@
+name: Mirror GitHub to Bitbucket
+
+on:
+  push:
+    branches:
+      - main  # Monitors changes to the 'main' branch
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout GitHub Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Git
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+    - name: Clone GitHub Repository
+      run: |
+        git clone --mirror https://github.com/Nkam-Emmanuel-T/Ass-mig-demo.git github-repo
+    - name: Set Git Author Email for Bitbucket
+      run: |
+        cd github-repo
+        git config user.email "nkame050@bots.bitbucket.org"
+    - name: Push to Bitbucket Repository
+      env:
+        BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
+      run: |
+        cd github-repo
+        git remote add bitbucket https://USERNAME:${{ secrets.BITBUCKET_TOKEN }}@https://bitbucket.org/migration-project-nkam/assignment_migration.git
+        git push --mirror bitbucket
