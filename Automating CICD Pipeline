@@ -1,0 +1,59 @@
+# .bitbucket-pipelines.yml
+
+pipelines:
+  default:
+    - step: &build_and_test
+        name: Build and Test
+        image: node:latest  # Or your preferred build image
+        caches:
+          - node  # Cache node_modules
+        script:
+          - npm install  # Install dependencies
+          - npm test     # Run tests
+          - npm run build # Build the application (if applicable)
+        artifacts: # Define artifacts to pass to the next step
+          - build/*  # Example: Include the 'build' directory
+
+    - step: &deploy_staging
+        name: Deploy to Staging
+        image: python:latest # Or an image with your deployment tools
+        deployment: staging
+        script:
+          - pip install some-deployment-tool  # Example
+          - some-deployment-tool deploy --env staging # Your deployment command
+
+    - step: &deploy_production
+        name: Deploy to Production
+        image: python:latest # Or an image with your deployment tools
+        deployment: production
+        trigger: manual # Manual trigger for production deployment
+        script:
+          - pip install some-deployment-tool  # Example
+          - some-deployment-tool deploy --env production # Your deployment command
+          - echo "Deployment to production complete!"
+
+  branches:
+    main: # Executes on pushes to the main branch
+      - step: *build_and_test
+      - step: *deploy_staging
+      - step: *deploy_production
+
+    develop: # Executes on pushes to the develop branch
+      - step: *build_and_test
+      - step: *deploy_staging
+
+    '{release/*}': # Executes on pushes to branches starting with 'release/'
+      - step: *build_and_test
+      - step: *deploy_staging
+
+# Optional: Define variables for your pipeline
+variables:
+  SOME_VARIABLE: "some_value"
+
+# Optional: Define a deployment environment
+definitions:
+  deployments:
+    staging:
+      name: Staging Environment
+    production:
+      name: Production Environment
